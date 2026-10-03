@@ -48,9 +48,9 @@ if (!noteOverlay){
   noteOverlay.innerHTML = `
     <div class="note-paper" id="notePaper">
       <button class="note-close" id="noteClose" aria-label="close note">✕</button>
-      <h3 class="note-title">just for you to fill in 💌</h3>
-      <p class="note-hint">tulis apa aja yang mau kamu sampaikan, atau wishlist kita ke depannya~</p>
-      <textarea id="noteTextarea" class="note-textarea" placeholder="dear... aku mau bilang..."></textarea>
+      <h3 class="note-title">To my beloved Ying 💌</h3>
+      <p class="note-hint">Favorite memory of us?</p>
+      <textarea id="noteTextarea" class="note-textarea" placeholder="you're too..."></textarea>
       <span class="note-saved" id="noteSaved">saved ✓</span>
     </div>
   `;
@@ -61,7 +61,11 @@ const noteTextarea = document.getElementById('noteTextarea');
 const noteClose    = document.getElementById('noteClose');
 const noteSavedTag = document.getElementById('noteSaved');
 
-noteTextarea.value = localStorage.getItem(NOTE_STORAGE_KEY) || '';
+try {
+  noteTextarea.value = localStorage.getItem(NOTE_STORAGE_KEY) || '';
+} catch (error) {
+  console.warn('Note storage is unavailable:', error);
+}
 
 function openNote(){
   noteOverlay.classList.add('open');
@@ -88,7 +92,12 @@ noteTextarea.addEventListener('input', () => {
   clearTimeout(noteSaveTimeout);
   noteSavedTag.classList.remove('show');
   noteSaveTimeout = setTimeout(() => {
-    localStorage.setItem(NOTE_STORAGE_KEY, noteTextarea.value);
+    try {
+      localStorage.setItem(NOTE_STORAGE_KEY, noteTextarea.value);
+    } catch (error) {
+      console.warn('Could not save the note:', error);
+      return;
+    }
     noteSavedTag.classList.add('show');
     setTimeout(() => noteSavedTag.classList.remove('show'), 1400);
   }, 500);
@@ -108,10 +117,7 @@ if (!bgMusic){
   bgMusic.id = 'bgMusic';
   bgMusic.loop = true;
   bgMusic.preload = 'auto';
-  const source = document.createElement('source');
-  source.src = 'assets/music.mp3';
-  source.type = 'audio/mpeg';
-  bgMusic.appendChild(source);
+  bgMusic.src = 'assets/music.mp3';
   document.body.appendChild(bgMusic);
 }
 
@@ -127,6 +133,11 @@ if (!musicBtn){
 }
 
 const musicIcon = musicBtn.querySelector('.music-icon');
+const musicStatus = document.createElement('div');
+musicStatus.setAttribute('role', 'status');
+musicStatus.style.cssText = 'position:fixed;bottom:88px;right:24px;max-width:280px;padding:12px;border-radius:12px;background:#fff;color:#333;box-shadow:0 4px 20px #0002;z-index:61;font-size:13px;';
+musicStatus.hidden = true;
+document.body.appendChild(musicStatus);
 let noteInterval = null;
 
 function spawnMusicNote(){
@@ -141,28 +152,68 @@ function spawnMusicNote(){
 
 function setMusicUI(isPlaying){
   musicBtn.classList.toggle('playing', isPlaying);
+  musicBtn.setAttribute('aria-label', isPlaying ? 'pause music' : 'play music');
+  musicBtn.setAttribute('aria-pressed', String(isPlaying));
+  musicBtn.title = isPlaying ? 'pause our song' : 'play our song';
   musicIcon.textContent = isPlaying ? '🎶' : '🎵';
   clearInterval(noteInterval);
   if (isPlaying) noteInterval = setInterval(spawnMusicNote, 500);
 }
 
 function saveMusicState(){
-  sessionStorage.setItem(MUSIC_STORAGE_KEY, JSON.stringify({
-    playing: !bgMusic.paused,
-    time: bgMusic.currentTime || 0
-  }));
+  try {
+    sessionStorage.setItem(MUSIC_STORAGE_KEY, JSON.stringify({
+      playing: !bgMusic.paused,
+      time: bgMusic.currentTime || 0
+    }));
+  } catch (error) {
+    console.warn('Could not save music state:', error);
+  }
 }
 
-const savedMusicState = JSON.parse(sessionStorage.getItem(MUSIC_STORAGE_KEY) || 'null');
+let savedMusicState = null;
+try {
+  savedMusicState = JSON.parse(sessionStorage.getItem(MUSIC_STORAGE_KEY) || 'null');
+} catch (error) {
+  console.warn('Could not restore music state:', error);
+}
+
+function reportMusicError(error){
+  setMusicUI(false);
+  saveMusicState();
+  musicBtn.title = error?.name === 'NotAllowedError'
+    ? 'click to play our song'
+    : 'could not play our song — click to retry';
+  console.error('Music playback failed:', error, bgMusic.error);
+  const messages = {
+    2: 'The song could not be downloaded. Check your connection, then click the music button to retry.',
+    3: 'The browser could not decode this song. Try replacing assets/music.mp3 with another MP3 export.',
+    4: 'The song is missing or its format is unsupported. Check assets/music.mp3.'
+  };
+  musicStatus.textContent = error?.name === 'NotAllowedError'
+    ? 'Click the music button to start the song.'
+    : messages[bgMusic.error?.code] || 'Music could not start. Click the music button to retry.';
+  musicStatus.hidden = false;
+}
+
+function playMusic(){
+  musicStatus.hidden = true;
+  bgMusic.muted = false;
+  bgMusic.volume = 1;
+  // Reload after a failed download so the button can retry playback.
+  if (bgMusic.error) bgMusic.load();
+  return bgMusic.play().then(() => {
+    musicStatus.hidden = true;
+    setMusicUI(true);
+    saveMusicState();
+  }).catch(reportMusicError);
+}
 
 function resumeMusic(){
   if (!savedMusicState || !savedMusicState.playing) return;
-  bgMusic.currentTime = savedMusicState.time || 0;
-  bgMusic.play().then(() => {
-    setMusicUI(true);
-  }).catch(() => {
-    setMusicUI(false);
-  });
+  const savedTime = Number(savedMusicState.time);
+  if (Number.isFinite(savedTime) && savedTime >= 0) bgMusic.currentTime = savedTime;
+  playMusic();
 }
 
 if (savedMusicState){
@@ -174,15 +225,32 @@ if (savedMusicState){
 }
 
 musicBtn.addEventListener('click', () => {
+  startOnInteraction = false;
   if (bgMusic.paused){
-    bgMusic.play().catch(() => {});
-    setMusicUI(true);
+    playMusic();
   } else {
     bgMusic.pause();
     setMusicUI(false);
   }
   saveMusicState();
 });
+
+// Start on the first interaction, or resume after a browser blocks autoplay.
+// Keep an explicitly paused song paused when navigating between pages.
+let startOnInteraction = !savedMusicState || savedMusicState.playing === true;
+document.addEventListener('click', (event) => {
+  if (!startOnInteraction || musicBtn.contains(event.target)) return;
+  startOnInteraction = false;
+  if (bgMusic.paused) playMusic();
+}, true);
+
+bgMusic.addEventListener('playing', () => setMusicUI(true));
+bgMusic.addEventListener('pause', () => {
+  setMusicUI(false);
+  saveMusicState();
+});
+bgMusic.addEventListener('error', () => reportMusicError(bgMusic.error));
+setMusicUI(false);
 
 bgMusic.addEventListener('timeupdate', () => {
   if (!bgMusic.paused) saveMusicState();
