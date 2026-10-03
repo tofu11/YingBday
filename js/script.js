@@ -291,15 +291,13 @@ if (floatingBg){
 const letterMessage =
 `My love,
 
-Happy birthday to the most wonderful person I know. I don't think words can fully capture how grateful I am to have you in my life, but I'm going to try anyway.
+Happy birthday to the most beautiful person I know. I don't think words can fully describe how grateful I am to have you in my life, but I'm going to try anyway.
 
-You make every ordinary day feel special just by being in it. Your smile, your laugh, the way you care about everyone around you... it all makes me fall for you more every single day.
+You make every  day feel special just by being in it. Your smile, your laugh, the way you care about me, the way I get lost in your eyes... it all makes me fall for you more and more each and every day.
 
-I hope this year brings you every single thing you've been hoping for, and so much more. I promise to be right beside you for all of it — the big moments and the tiny, quiet ones too.
+I hope this year brings you everything you've always hoped for, and so much more. I promise to be right beside you for all of it — the big and small moments life thows our way. I can't wait to see what the future holds for us, and I know that as long as we're together, it will be amazing.
 
-Thank you for being exactly who you are. I love you more than words can say.
-
-Happy birthday, my girl. Here's to you. 🎂`;
+Happy birthday, babe. Here's to your birthday!!!! 🎂`;
 
 const letterEl = document.getElementById('letter-text');
 let typeIndex = 0;
