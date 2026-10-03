@@ -6,21 +6,14 @@
 ================================================================= */
 const photos = [
   {
-    src: "photos/photo1.jpg",
-    caption: "Thank you for being a part of my life... every day with you feels like a gift."
+    src: "photos/firstdate.jpg",
+    caption: "Thank you for being a part of my life... every day with you feels special."
   },
   {
-    src: "photos/photo2.jpg",
-    caption: "I hope that on this special day, you are surrounded by happiness and love."
-  },
-  {
-    src: "photos/photo3.jpg",
-    caption: "Every laugh, every hug, every little moment with you means the world to me."
-  },
-  {
-    src: "photos/photo4.jpg",
-    caption: "Here's to many more birthdays, adventures, and memories together, my love."
+    src: "photos/marriage.jpg",
+    caption: "and remember, we are already married... just not legally."
   }
+
 ];
 
 const photoEl    = document.getElementById('currentPhoto');

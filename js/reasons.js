@@ -1,36 +1,5 @@
 /* ================================================================
-   LIGHTBOX — klik foto yang gantung di "jemuran" buat lihat
-   versi lebih besarnya.
-================================================================= */
-const hangPhotos      = document.querySelectorAll('.hang-photo img');
-const lightboxOverlay = document.getElementById('lightboxOverlay');
-const lightboxImg     = document.getElementById('lightboxImg');
-const lightboxClose   = document.getElementById('lightboxClose');
-
-hangPhotos.forEach((img) => {
-  img.addEventListener('click', () => {
-    lightboxImg.src = img.src;
-    lightboxImg.alt = img.alt;
-    lightboxOverlay.classList.add('open');
-  });
-});
-
-function closeLightbox(){
-  lightboxOverlay.classList.remove('open');
-}
-
-lightboxClose.addEventListener('click', closeLightbox);
-
-lightboxOverlay.addEventListener('click', (e) => {
-  if (e.target === lightboxOverlay) closeLightbox();
-});
-
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && lightboxOverlay.classList.contains('open')) closeLightbox();
-});
-
-/* ================================================================
-   AUTO-SCROLL PELAN buat kontainer "100 reasons"
+   AUTO-SCROLL PELAN buat kontainer "22 reasons"
    -----------------------------------------------------------
    Kontainernya otomatis scroll ke bawah pelan-pelan (kayak
    credits film), biar ada animasi kecil & dia nggak perlu
